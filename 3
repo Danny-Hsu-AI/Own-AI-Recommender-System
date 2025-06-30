@@ -1,0 +1,40 @@
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+# 假設你已經有電影標題與對應的 embeddings，這裡用簡單示例
+movie_titles = [
+    "The Matrix",
+    "Inception",
+    "Titanic",
+    "Interstellar",
+    "The Godfather",
+    # ... 其他電影標題
+]
+
+# 載入已存好的 embeddings，這裡用隨機向量模擬
+# 你實際用 np.load('movie_plots_embeddings.npy') 載入
+embeddings = np.random.rand(len(movie_titles), 768)  # 假設向量維度是768
+
+def get_top_k_similar(query_embedding, embeddings, titles, top_k=5):
+    """
+    計算 query_embedding 與所有 embeddings 的餘弦相似度，
+    回傳 top_k 個最相似電影的標題與相似度。
+    """
+    # 計算相似度矩陣 (1, N)
+    similarities = cosine_similarity(query_embedding.reshape(1, -1), embeddings).flatten()
+    
+    # 取得相似度最高的 top_k 索引（排序時排除自己如果有需要）
+    top_k_idx = similarities.argsort()[::-1][:top_k]
+    
+    # 回傳標題與相似度
+    return [(titles[i], similarities[i]) for i in top_k_idx]
+
+# 測試：用第一部電影的向量做查詢
+query_idx = 0
+query_embedding = embeddings[query_idx]
+
+results = get_top_k_similar(query_embedding, embeddings, movie_titles, top_k=5)
+
+print("Top 5 similar movies:")
+for title, score in results:
+    print(f"{title}: {score:.4f}")
