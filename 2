@@ -1,0 +1,24 @@
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+# 載入預訓練模型
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# 假設你有50筆電影劇情文字，這裡用範例文字替代
+texts = [
+    "A computer hacker discovers the reality is a simulation controlled by machines.",
+    "A thief who enters dreams must plant an idea in a target's subconscious.",
+    # ... 最少50筆
+]
+
+# 為示範，複製這些文字讓總數達50筆
+texts = texts * 25  # 2筆*25 = 50筆
+
+# 產生向量 (embeddings)
+embeddings = model.encode(texts)
+
+# 存成 NumPy 檔案
+np.save('movie_plots_embeddings.npy', embeddings)
+
+print(f"Generated embeddings shape: {embeddings.shape}")
+print("Embeddings saved to 'movie_plots_embeddings.npy'")
