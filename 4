@@ -1,0 +1,64 @@
+import csv
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# 1. 讀取CSV電影資料
+def load_movie_data(csv_file):
+    movies = []
+    plots = []
+    with open(csv_file, encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            movies.append(row['title'])
+            plots.append(row['plot'])
+    return movies, plots
+
+# 2. 產生或載入 embeddings
+def get_or_create_embeddings(plots, model, embedding_file='embeddings.npy'):
+    try:
+        embeddings = np.load(embedding_file)
+        print(f"Loaded embeddings from {embedding_file}")
+    except FileNotFoundError:
+        print("Embedding file not found, generating embeddings...")
+        embeddings = model.encode(plots, show_progress_bar=True)
+        np.save(embedding_file, embeddings)
+        print(f"Saved embeddings to {embedding_file}")
+    return embeddings
+
+# 3. 相似度搜尋函式
+def get_top_k_similar(query_embedding, embeddings, titles, top_k=5):
+    similarities = cosine_similarity(query_embedding.reshape(1, -1), embeddings).flatten()
+    top_k_idx = similarities.argsort()[::-1][:top_k]
+    return [(titles[i], similarities[i]) for i in top_k_idx]
+
+def main():
+    # 載入模型
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+
+    # 讀取電影資料（請改成你的檔案路徑）
+    csv_file = 'movies.csv'
+    movies, plots = load_movie_data(csv_file)
+
+    # 取得 embeddings
+    embeddings = get_or_create_embeddings(plots, model)
+
+    print("Enter a movie plot or description to get recommendations (type 'exit' to quit):")
+    while True:
+        user_input = input("> ")
+        if user_input.lower() == 'exit':
+            break
+
+        # 產生使用者輸入的向量
+        query_embedding = model.encode([user_input])[0]
+
+        # 找出最相似電影
+        results = get_top_k_similar(query_embedding, embeddings, movies, top_k=5)
+
+        print("Top 5 recommended movies:")
+        for title, score in results:
+            print(f"{title} (Similarity: {score:.4f})")
+        print("-" * 40)
+
+if __name__ == '__main__':
+    main()
